@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Yumurta Tespiti | Fatih Emin Karahan</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <h1>Yumurta Tespiti ve Sayımı</h1>
+      <p class="sub">Bir fotoğraf seçin ya da kameranızı açın; holluktaki yumurtalar ve çatlak yumurtalar tarayıcınızda (YOLO modeli ile) tespit edilip sayılır. Görüntüleriniz hiçbir sunucuya gönderilmez. Model daha büyük ve segmentasyon tabanlı olduğu için ilk yüklemede biraz zaman alabilir, kamera modu yavaş çalışabilir.</p>
+    </header>
+
+    <main class="panel">
+      <div class="mode-switch">
+        <button id="mode-image" class="mode-btn active" type="button">Fotoğraf Yükle</button>
+        <button id="mode-webcam" class="mode-btn" type="button">Kamera</button>
+      </div>
+
+      <div id="image-controls" class="controls">
+        <input id="image-input" type="file" accept="image/*" />
+      </div>
+
+      <div id="webcam-controls" class="controls" hidden>
+        <button id="webcam-start" type="button">Kamerayı Başlat</button>
+        <button id="webcam-stop" type="button" disabled>Durdur</button>
+      </div>
+
+      <div id="status" class="status">Model yükleniyor...</div>
+      <div id="counts" class="counts" hidden>
+        <span class="count-pill egg">🥚 Yumurta: <b id="egg-count">0</b></span>
+        <span class="count-pill crack">⚠️ Çatlak: <b id="crack-count">0</b></span>
+      </div>
+
+      <div class="canvas-wrap">
+        <video id="video" playsinline muted hidden></video>
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <div id="fps" class="fps" hidden></div>
+    </main>
+
+    <footer class="footer">
+      <p><a href="https://fatiheminkarahan.com" target="_blank" rel="noopener">fatiheminkarahan.com</a> · Model: YOLO11m-seg (ONNX, 640×640) · Tamamen istemci tarafında çalışır</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
