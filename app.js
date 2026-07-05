@@ -1,14 +1,14 @@
 const MODEL_URL = "model/egg_yolo.onnx";
 const INPUT_SIZE = 640;
+// The underlying model's output has 2 class columns, but only "egg" is used —
+// everything is reported and labeled as a plain egg count.
 const NUM_CLASSES = 2;
-const CLASS_NAMES = ["Yumurta", "Çatlak Yumurta"];
 const SCORE_THRESHOLD = 0.35;
 const IOU_THRESHOLD = 0.45;
 
 const statusEl = document.getElementById("status");
 const countsEl = document.getElementById("counts");
 const eggCountEl = document.getElementById("egg-count");
-const crackCountEl = document.getElementById("crack-count");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const video = document.getElementById("video");
@@ -26,7 +26,7 @@ let session = null;
 let webcamStream = null;
 let webcamLoopActive = false;
 
-const COLORS = ["#4f8cff", "#ff6b6b"];
+const BOX_COLOR = "#4f8cff";
 
 function setStatus(msg) {
   statusEl.textContent = msg;
@@ -148,12 +148,11 @@ function drawDetections(boxes) {
   ctx.font = "16px sans-serif";
   ctx.textBaseline = "top";
   for (const b of boxes) {
-    const color = COLORS[b.classId % COLORS.length];
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = BOX_COLOR;
     ctx.strokeRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
-    const label = `${CLASS_NAMES[b.classId] ?? b.classId} ${(b.score * 100).toFixed(0)}%`;
+    const label = `Yumurta ${(b.score * 100).toFixed(0)}%`;
     const textWidth = ctx.measureText(label).width;
-    ctx.fillStyle = color;
+    ctx.fillStyle = BOX_COLOR;
     ctx.fillRect(b.x1, b.y1 - 20, textWidth + 8, 20);
     ctx.fillStyle = "#0b0d11";
     ctx.fillText(label, b.x1 + 4, b.y1 - 18);
@@ -161,10 +160,7 @@ function drawDetections(boxes) {
 }
 
 function updateCounts(boxes) {
-  const eggCount = boxes.filter((b) => b.classId === 0).length;
-  const crackCount = boxes.filter((b) => b.classId === 1).length;
-  eggCountEl.textContent = String(eggCount);
-  crackCountEl.textContent = String(crackCount);
+  eggCountEl.textContent = String(boxes.length);
   countsEl.hidden = false;
 }
 

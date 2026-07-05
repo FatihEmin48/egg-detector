@@ -119,11 +119,6 @@ body {
   color: #8fb4ff;
 }
 
-.count-pill.crack {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff9b9b;
-}
-
 .canvas-wrap {
   position: relative;
   width: 100%;
