@@ -10,7 +10,7 @@
   <div class="app">
     <header class="hero">
       <h1>Yumurta Tespiti ve Sayımı</h1>
-      <p class="sub">Bir fotoğraf seçin ya da kameranızı açın; holluktaki yumurtalar tarayıcınızda (YOLO modeli ile) tespit edilip sayılır. Görüntüleriniz hiçbir sunucuya gönderilmez. Model daha büyük olduğu için ilk yüklemede biraz zaman alabilir, kamera modu yavaş çalışabilir.</p>
+      <p class="sub">Bir fotoğraf seçin ya da kameranızı açıp bir fotoğraf çekin; holluktaki yumurtalar tarayıcınızda (YOLO modeli ile) tespit edilip sayılır. Görüntüleriniz hiçbir sunucuya gönderilmez. Model daha büyük olduğu için ilk yüklemede biraz zaman alabilir.</p>
     </header>
 
     <main class="panel">
@@ -24,8 +24,8 @@
       </div>
 
       <div id="webcam-controls" class="controls" hidden>
-        <button id="webcam-start" type="button">Kamerayı Başlat</button>
-        <button id="webcam-stop" type="button" disabled>Durdur</button>
+        <button id="capture-btn" type="button">📷 Fotoğraf Çek</button>
+        <button id="reset-btn" type="button" hidden>Sıfırla</button>
       </div>
 
       <div id="status" class="status">Model yükleniyor...</div>
@@ -37,8 +37,6 @@
         <video id="video" playsinline muted hidden></video>
         <canvas id="canvas"></canvas>
       </div>
-
-      <div id="fps" class="fps" hidden></div>
     </main>
 
     <footer class="footer">

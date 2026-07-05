@@ -1,14 +1,14 @@
 # Yumurta Tespiti ve Sayımı
 
-Holluktaki yumurtaları tarayıcıda tespit edip sayan bir araç. Model, [YumurtaTespiti](https://github.com/FatihEmin48/YumurtaTespiti) mobil uygulaması için eğitilmiş gerçek YOLO11m-seg modelinin ONNX'e aktarılmış hâlidir; sunucu gerekmez, tüm çıkarım istemci tarafında çalışır.
+Holluktaki yumurtalar YOLO ile tespit edilip sayılıyor. Tamamen tarayıcıda, istemci tarafında çalışır — sunucu gerekmez.
 
 🔗 **Canlı:** https://fatihemin48.github.io/egg-detector/
 
 ## Nasıl çalışır
 
-Orijinal model bir YOLO11 **segmentasyon** modelidir. Bu demo, modelin kutu çıktısını kullanır; maske katsayıları (segmentasyon) şimdilik kullanılmaz — amaç basit ve hızlı bir tespit/sayım deneyimi sunmak.
+Bir fotoğraf yükleyebilir ya da kamerayı açıp "Fotoğraf Çek" butonuyla o anki kareyi yakalayabilirsiniz; yumurtalar tespit edilip sayılır. "Sıfırla" butonuyla kameraya dönüp yeni bir fotoğraf çekebilirsiniz.
 
-Model 640×640 girişle çalışır ve önceki nesne tespiti demosundan (YOLOv8n, 320×320) daha büyüktür; ilk yüklemede indirme biraz daha uzun sürer, kamera modu daha yavaş çalışabilir.
+Model, kutu (box) çıktısını kullanır; segmentasyon maskeleri şimdilik kullanılmıyor — amaç basit ve hızlı bir tespit/sayım deneyimi sunmak.
 
 ## Dosyalar
 

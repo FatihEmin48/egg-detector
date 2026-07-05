@@ -12,19 +12,17 @@ const eggCountEl = document.getElementById("egg-count");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const video = document.getElementById("video");
-const fpsEl = document.getElementById("fps");
 
 const modeImageBtn = document.getElementById("mode-image");
 const modeWebcamBtn = document.getElementById("mode-webcam");
 const imageControls = document.getElementById("image-controls");
 const webcamControls = document.getElementById("webcam-controls");
 const imageInput = document.getElementById("image-input");
-const webcamStartBtn = document.getElementById("webcam-start");
-const webcamStopBtn = document.getElementById("webcam-stop");
+const captureBtn = document.getElementById("capture-btn");
+const resetBtn = document.getElementById("reset-btn");
 
 let session = null;
 let webcamStream = null;
-let webcamLoopActive = false;
 
 const BOX_COLOR = "#4f8cff";
 
@@ -36,7 +34,7 @@ async function loadModel() {
   ort.env.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 1;
   setStatus("Model indiriliyor (ilk seferde ~85MB, sonrasında önbellekten anında yüklenir)...");
   session = await ort.InferenceSession.create(MODEL_URL, { executionProviders: ["wasm"] });
-  setStatus("Hazır. Bir fotoğraf yükleyin ya da kamerayı başlatın.");
+  setStatus("Hazır. Bir fotoğraf yükleyin ya da Kamera sekmesine geçin.");
 }
 
 // Draws `source` (image/video) letterboxed into an INPUT_SIZE x INPUT_SIZE canvas
@@ -198,9 +196,11 @@ function setMode(mode) {
   modeWebcamBtn.classList.toggle("active", !isImage);
   imageControls.hidden = !isImage;
   webcamControls.hidden = isImage;
-  fpsEl.hidden = isImage;
   if (isImage) {
-    stopWebcam();
+    stopWebcamStream();
+    video.hidden = true;
+  } else {
+    startWebcamPreview();
   }
 }
 
@@ -212,7 +212,7 @@ imageInput.addEventListener("change", (e) => {
   if (file) runOnImageFile(file);
 });
 
-async function startWebcam() {
+async function startWebcamPreview() {
   try {
     webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
   } catch (err) {
@@ -221,39 +221,38 @@ async function startWebcam() {
   }
   video.srcObject = webcamStream;
   await video.play();
-  webcamStartBtn.disabled = true;
-  webcamStopBtn.disabled = false;
-  webcamLoopActive = true;
-  webcamLoop();
+  video.hidden = false;
+  canvas.hidden = true;
+  captureBtn.hidden = false;
+  resetBtn.hidden = true;
+  countsEl.hidden = true;
+  setStatus("Hazır. Fotoğraf çekmek için butona basın.");
 }
 
-function stopWebcam() {
-  webcamLoopActive = false;
+function stopWebcamStream() {
   if (webcamStream) {
     webcamStream.getTracks().forEach((t) => t.stop());
     webcamStream = null;
   }
-  webcamStartBtn.disabled = false;
-  webcamStopBtn.disabled = true;
 }
 
-async function webcamLoop() {
-  let lastTime = performance.now();
-  while (webcamLoopActive) {
-    if (video.videoWidth === 0) {
-      await new Promise((r) => requestAnimationFrame(r));
-      continue;
-    }
-    const count = await runOnSource(video, video.videoWidth, video.videoHeight);
-    const now = performance.now();
-    const fps = 1000 / (now - lastTime);
-    lastTime = now;
-    fpsEl.textContent = `${fps.toFixed(1)} FPS · ${count} nesne`;
-    await new Promise((r) => requestAnimationFrame(r));
+async function captureAndDetect() {
+  if (!video.videoWidth) return;
+  if (!session) {
+    setStatus("Model henüz yüklenmedi, lütfen bekleyin.");
+    return;
   }
+  setStatus("Analiz ediliyor...");
+  video.hidden = true;
+  canvas.hidden = false;
+  const count = await runOnSource(video, video.videoWidth, video.videoHeight);
+  stopWebcamStream();
+  captureBtn.hidden = true;
+  resetBtn.hidden = false;
+  setStatus(`${count} yumurta tespit edildi.`);
 }
 
-webcamStartBtn.addEventListener("click", startWebcam);
-webcamStopBtn.addEventListener("click", stopWebcam);
+captureBtn.addEventListener("click", captureAndDetect);
+resetBtn.addEventListener("click", startWebcamPreview);
 
 loadModel();
