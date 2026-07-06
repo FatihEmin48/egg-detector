@@ -194,6 +194,13 @@ async function runOnSource(source, width, height) {
     ctx.drawImage(source, 0, 0, width, height);
   }
 
+  // The draw above only updates the canvas's backing bitmap; the browser
+  // won't actually paint it to the screen until it gets a chance to
+  // render, which the (blocking, CPU-heavy) inference call below never
+  // yields for. Wait for a real paint first, so the user sees the
+  // captured photo instead of a frozen/blank canvas while the model runs.
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
   const { tensor, scale, padX, padY } = preprocess(source, width, height);
   const outputs = await session.run({ images: tensor });
   const output = outputs["output0"] ?? outputs[Object.keys(outputs)[0]];
@@ -291,35 +298,43 @@ async function captureAndDetect() {
   setStatus(`${count} yumurta tespit edildi.`);
 }
 
-function downloadImage() {
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `yumurta-tespiti-${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, "image/png");
+function dataURLToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
 }
 
-function shareImage() {
-  canvas.toBlob(async (blob) => {
-    if (!blob) return;
-    const file = new File([blob], `yumurta-tespiti-${Date.now()}.png`, { type: "image/png" });
+// canvas.toBlob() is asynchronous, and by the time its callback fires,
+// mobile browsers no longer consider the click a user gesture — so the
+// download/share call inside it gets silently blocked. toDataURL() is
+// synchronous, so it keeps everything below in the same user-gesture
+// context as the click itself.
+function downloadImage() {
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL("image/png");
+  a.download = `yumurta-tespiti-${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
-    if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
-      setStatus("Bu cihaz/tarayıcı paylaşmayı desteklemiyor.");
-      return;
-    }
-    try {
-      await navigator.share({ files: [file], title: "Yumurta Tespiti" });
-    } catch (err) {
-      if (err.name !== "AbortError") setStatus("Paylaşılamadı: " + err.message);
-    }
-  }, "image/png");
+async function shareImage() {
+  const file = new File([dataURLToBlob(canvas.toDataURL("image/png"))], `yumurta-tespiti-${Date.now()}.png`, {
+    type: "image/png",
+  });
+
+  if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
+    setStatus("Bu cihaz/tarayıcı paylaşmayı desteklemiyor.");
+    return;
+  }
+  try {
+    await navigator.share({ files: [file], title: "Yumurta Tespiti" });
+  } catch (err) {
+    if (err.name !== "AbortError") setStatus("Paylaşılamadı: " + err.message);
+  }
 }
 
 captureBtn.addEventListener("click", captureAndDetect);
