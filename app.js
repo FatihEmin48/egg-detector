@@ -20,6 +20,7 @@ const webcamControls = document.getElementById("webcam-controls");
 const imageInput = document.getElementById("image-input");
 const captureBtn = document.getElementById("capture-btn");
 const resetBtn = document.getElementById("reset-btn");
+const saveBtn = document.getElementById("save-btn");
 
 let session = null;
 let webcamStream = null;
@@ -157,6 +158,22 @@ function drawDetections(boxes) {
   }
 }
 
+function drawSummary(count) {
+  const label = `${count} Yumurta Tespit Edildi`;
+  ctx.font = "bold 20px sans-serif";
+  ctx.textBaseline = "middle";
+  const paddingX = 14;
+  const textWidth = ctx.measureText(label).width;
+  const boxWidth = textWidth + paddingX * 2;
+  const boxHeight = 36;
+  const x = Math.max(8, (canvas.width - boxWidth) / 2);
+  const y = 14;
+  ctx.fillStyle = "rgba(11, 13, 17, 0.75)";
+  ctx.fillRect(x, y, boxWidth, boxHeight);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(label, x + paddingX, y + boxHeight / 2 + 1);
+}
+
 function updateCounts(boxes) {
   eggCountEl.textContent = String(boxes.length);
   countsEl.hidden = false;
@@ -172,6 +189,7 @@ async function runOnSource(source, width, height) {
   const output = outputs["output0"] ?? outputs[Object.keys(outputs)[0]];
   const boxes = postprocess(output, scale, padX, padY);
   drawDetections(boxes);
+  drawSummary(boxes.length);
   updateCounts(boxes);
   return boxes.length;
 }
@@ -252,7 +270,33 @@ async function captureAndDetect() {
   setStatus(`${count} yumurta tespit edildi.`);
 }
 
+function saveToGallery() {
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+    const file = new File([blob], `yumurta-tespiti-${Date.now()}.png`, { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "Yumurta Tespiti" });
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, "image/png");
+}
+
 captureBtn.addEventListener("click", captureAndDetect);
 resetBtn.addEventListener("click", startWebcamPreview);
+saveBtn.addEventListener("click", saveToGallery);
 
 loadModel();

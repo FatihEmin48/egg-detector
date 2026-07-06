@@ -102,6 +102,8 @@ body {
 
 .counts {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 14px;
 }
@@ -117,6 +119,17 @@ body {
 .count-pill.egg {
   background: rgba(79, 140, 255, 0.15);
   color: #8fb4ff;
+}
+
+.save-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .canvas-wrap {
