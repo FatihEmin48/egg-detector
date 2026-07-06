@@ -132,6 +132,11 @@ body {
   cursor: pointer;
 }
 
+.save-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .canvas-wrap {
   position: relative;
   width: 100%;

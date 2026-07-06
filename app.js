@@ -21,6 +21,7 @@ const imageInput = document.getElementById("image-input");
 const captureBtn = document.getElementById("capture-btn");
 const resetBtn = document.getElementById("reset-btn");
 const saveBtn = document.getElementById("save-btn");
+const shareBtn = document.getElementById("share-btn");
 
 let session = null;
 let webcamStream = null;
@@ -177,6 +178,13 @@ function drawSummary(count) {
 function updateCounts(boxes) {
   eggCountEl.textContent = String(boxes.length);
   countsEl.hidden = false;
+  saveBtn.disabled = false;
+  shareBtn.disabled = false;
+}
+
+function disableResultActions() {
+  saveBtn.disabled = true;
+  shareBtn.disabled = true;
 }
 
 async function runOnSource(source, width, height) {
@@ -204,6 +212,7 @@ async function runOnImageFile(file) {
     img.onerror = reject;
     img.src = url;
   });
+  disableResultActions();
   setStatus("Analiz ediliyor...");
   const count = await runOnSource(img, img.naturalWidth, img.naturalHeight);
   setStatus(`${count} nesne tespit edildi.`);
@@ -246,6 +255,7 @@ async function startWebcamPreview() {
   captureBtn.hidden = false;
   resetBtn.hidden = true;
   countsEl.hidden = true;
+  disableResultActions();
   setStatus("Hazır. Fotoğraf çekmek için butona basın.");
 }
 
@@ -274,30 +284,20 @@ async function captureAndDetect() {
   video.hidden = true;
   canvas.hidden = false;
   captureBtn.hidden = true;
+  disableResultActions();
   setStatus("Analiz ediliyor...");
   const count = await runOnSource(canvas, width, height);
   resetBtn.hidden = false;
   setStatus(`${count} yumurta tespit edildi.`);
 }
 
-function saveToGallery() {
-  canvas.toBlob(async (blob) => {
+function downloadImage() {
+  canvas.toBlob((blob) => {
     if (!blob) return;
-    const file = new File([blob], `yumurta-tespiti-${Date.now()}.png`, { type: "image/png" });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: "Yumurta Tespiti" });
-        return;
-      } catch (err) {
-        if (err.name === "AbortError") return;
-      }
-    }
-
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = file.name;
+    a.download = `yumurta-tespiti-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -305,8 +305,26 @@ function saveToGallery() {
   }, "image/png");
 }
 
+function shareImage() {
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+    const file = new File([blob], `yumurta-tespiti-${Date.now()}.png`, { type: "image/png" });
+
+    if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
+      setStatus("Bu cihaz/tarayıcı paylaşmayı desteklemiyor.");
+      return;
+    }
+    try {
+      await navigator.share({ files: [file], title: "Yumurta Tespiti" });
+    } catch (err) {
+      if (err.name !== "AbortError") setStatus("Paylaşılamadı: " + err.message);
+    }
+  }, "image/png");
+}
+
 captureBtn.addEventListener("click", captureAndDetect);
 resetBtn.addEventListener("click", startWebcamPreview);
-saveBtn.addEventListener("click", saveToGallery);
+saveBtn.addEventListener("click", downloadImage);
+shareBtn.addEventListener("click", shareImage);
 
 loadModel();
