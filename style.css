@@ -138,6 +138,11 @@ body {
   display: block;
 }
 
+#video[hidden],
+#canvas[hidden] {
+  display: none;
+}
+
 .footer {
   text-align: center;
   margin-top: 20px;
