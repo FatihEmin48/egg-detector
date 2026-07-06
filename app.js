@@ -180,9 +180,11 @@ function updateCounts(boxes) {
 }
 
 async function runOnSource(source, width, height) {
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(source, 0, 0, width, height);
+  if (source !== canvas) {
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(source, 0, 0, width, height);
+  }
 
   const { tensor, scale, padX, padY } = preprocess(source, width, height);
   const outputs = await session.run({ images: tensor });
@@ -260,12 +262,20 @@ async function captureAndDetect() {
     setStatus("Model henüz yüklenmedi, lütfen bekleyin.");
     return;
   }
-  setStatus("Analiz ediliyor...");
+  // Grab the frame onto the canvas and stop the camera stream immediately,
+  // before the (slower) inference runs, so the live feed doesn't keep
+  // playing underneath while the user waits.
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(video, 0, 0, width, height);
+  stopWebcamStream();
   video.hidden = true;
   canvas.hidden = false;
-  const count = await runOnSource(video, video.videoWidth, video.videoHeight);
-  stopWebcamStream();
   captureBtn.hidden = true;
+  setStatus("Analiz ediliyor...");
+  const count = await runOnSource(canvas, width, height);
   resetBtn.hidden = false;
   setStatus(`${count} yumurta tespit edildi.`);
 }
